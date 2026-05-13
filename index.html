@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>그립애즈 — 소셜 커넥트</title>
+  <style>
+    /* ── 리셋 & 기본 ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+      color: #111116;
+      background: #fff;
+    }
+
+    /* ── 토큰 — 인디고/퍼플 계열 ── */
+    :root {
+      --primary:       #5046E5;
+      --primary-hover: #4338CA;
+      --primary-light: #EEECFD;
+      --primary-mid:   #C7D2FE;
+      --primary-border:#C4BDFA;
+      --white:         #FFFFFF;
+      --subtle:        #F5F5F7;
+      --border:        #E8E8E8;
+      --text-dark:     #111116;
+      --text-body:     #374151;
+      --text-muted:    #9CA3AF;
+      --text-sub:      #6B7280;
+    }
+
+    /* ── 애니메이션 ── */
+    @keyframes pulse  { 0%,100%{opacity:1} 50%{opacity:.35} }
+    @keyframes fadeup { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── GNB ── */
+    #gnb {
+      position: fixed; top:0; left:0; right:0; z-index:100;
+      height: 60px; background: var(--white);
+      border-bottom: 1px solid transparent;
+      display: flex; align-items: center; padding: 0 24px;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    #gnb.scrolled {
+      border-bottom-color: var(--border);
+      box-shadow: 0 1px 12px rgba(0,0,0,.06);
+    }
+    .gnb-inner {
+      max-width: 1080px; width: 100%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .gnb-logo { display:flex; align-items:center; gap:8px; }
+    .gnb-logo-icon img { width:100px; border-radius:8px; display:block; }
+    .gnb-nav { display:flex; gap:2px; }
+    .gnb-nav button {
+      background:none; border:none; cursor:pointer; font-family:inherit;
+      font-size:15px; font-weight:500; color:var(--text-sub);
+      padding:8px 12px; border-radius:8px;
+      transition:color .15s, background .15s;
+    }
+    .gnb-nav button:hover { color:var(--text-dark); background:var(--subtle); }
+
+    .btn-primary {
+      display:inline-flex; align-items:center; justify-content:center;
+      background:var(--primary); color:#fff; border:none; border-radius:12px;
+      padding:16px 28px; font-size:16px; font-weight:700;
+      cursor:pointer; font-family:inherit;
+      transition:background .15s, transform .1s;
+    }
+    .btn-primary:hover  { background:var(--primary-hover); }
+    .btn-primary:active { transform:scale(.97); }
+    .btn-primary.sm { padding:9px 18px; font-size:14px; border-radius:8px; }
+
+    .btn-outline {
+      display:inline-flex; align-items:center; justify-content:center;
+      background:var(--white); color:var(--primary);
+      border:1.5px solid var(--primary); border-radius:12px;
+      padding:15px 28px; font-size:15px; font-weight:600;
+      cursor:pointer; font-family:inherit; transition:background .15s;
+    }
+    .btn-outline:hover { background:var(--primary-light); }
+
+    /* ── Hero ── */
+    #hero {
+      background: linear-gradient(160deg, #EEECFD 0%, #ffffff 45%, #F5F5F7 100%);
+      min-height: 100svh;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding:120px 24px 80px; position:relative; overflow:hidden;
+    }
+    .hero-blob { position:absolute; border-radius:50%; pointer-events:none; }
+    .hero-inner {
+      position:relative; max-width:720px; width:100%;
+      text-align:center; animation: fadeup .7s ease both;
+    }
+    .promo-chip {
+      display:inline-flex; align-items:center; gap:8px;
+      background:var(--primary-light); border:1px solid var(--primary-border);
+      border-radius:99px; padding:7px 16px; margin-bottom:28px;
+    }
+    .promo-dot {
+      width:7px; height:7px; border-radius:50%;
+      background:var(--primary); display:inline-block;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .promo-text { color:var(--primary); font-size:14px; font-weight:700; }
+    #hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight:900; color:var(--text-dark);
+      line-height:1.18; letter-spacing:-.03em; margin-bottom:20px;
+    }
+    #hero h1 span { color:var(--primary); }
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 19px);
+      color:var(--text-sub); line-height:1.8; margin-bottom:36px;
+    }
+    .hero-sub strong { color:var(--text-dark); font-weight:700; }
+    .hero-ctas { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+    .stat-bar {
+      display:flex; margin-top:56px;
+      border-top:1px solid var(--border); padding-top:32px;
+    }
+    .stat-item {
+      flex:1; text-align:center; padding:0 20px;
+      border-right:1px solid var(--border);
+    }
+    .stat-item:last-child { border-right:none; }
+    .stat-val {
+      color:var(--primary); font-weight:900;
+      font-size: clamp(20px, 3vw, 28px); letter-spacing:-.02em;
+    }
+    .stat-lbl { color:var(--text-muted); font-size:12px; margin-top:5px; line-height:1.4; }
+
+    /* ── 공통 섹션 ── */
+    .section-label {
+      color:var(--primary); font-size:15px; font-weight:700;
+      letter-spacing:.18em; text-transform:uppercase;
+      margin-bottom:12px; text-align:center; display:block;
+    }
+    .section-h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight:700; color:var(--text-dark);
+      letter-spacing:-.03em; text-align:center; margin-bottom:50px;
+    }
+    .section-sub {
+      font-size:16px; color:var(--text-muted);
+      text-align:center; margin-bottom:40px;
+    }
+
+    /* ── USP ── */
+    #usp {
+      background:var(--subtle); border-top:1px solid var(--border);
+      padding:88px 24px 96px;
+    }
+    .usp-inner { max-width:960px; margin:0 auto; }
+    .tab-bar {
+      display:flex; gap:6px; background:var(--white);
+      border-radius:16px; padding:6px;
+      max-width:480px; margin:0 auto 52px;
+      box-shadow:0 2px 16px rgba(0,0,0,.07);
+    }
+    .usp-tab {
+      flex:1; background:none; border:none; cursor:pointer; font-family:inherit;
+      font-size:15px; font-weight:600; padding:10px 16px;
+      border-radius:99px; transition:all .2s; color:var(--text-muted);
+      white-space:nowrap;
+    }
+    .usp-tab.active { background:var(--primary); color:#fff; }
+    .usp-tab:hover:not(.active) { color:var(--text-dark); background:var(--subtle); }
+    .usp-panel {
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:48px; align-items:center;
+      animation: fadeup .35s ease both;
+    }
+    .usp-headline {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      font-weight:700; color:var(--text-dark);
+      line-height:1.3; letter-spacing:-.03em;
+      white-space:pre-line; margin-bottom:18px;
+    }
+    .usp-body { font-size:17px; color:var(--text-sub); line-height:1.8; margin-bottom:28px; }
+    .stat-card {
+      display:inline-flex; flex-direction:column; gap:6px;
+    }
+    .stat-card-val { color:var(--primary); font-size:36px; font-weight:900; letter-spacing:-.04em; line-height:1; }
+    .stat-card-lbl { color:var(--text-sub); font-size:14px; font-weight:500; }
+    .usp-visual {
+      background: radial-gradient(ellipse at 30% 30%, #C7D2FE 0%, #EEECFD 55%, #F5F3FF 100%);
+      border-radius:36px; aspect-ratio:1/1; max-height:320px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:100px; position:relative; overflow:hidden;
+      box-shadow:0 24px 64px rgba(80,70,229,.13), 0 4px 16px rgba(80,70,229,.06);
+    }
+    .usp-visual-blur {
+      position:absolute; width:70%; height:70%;
+      border-radius:50%; background:rgba(255,255,255,.45); filter:blur(32px);
+    }
+    .usp-emoji { position:relative; z-index:1; filter:drop-shadow(0 8px 20px rgba(80,70,229,.18)); }
+
+    /* ── 상품 (다회권 탭 구조) ── */
+    #products {
+      background:var(--white); border-top:1px solid var(--border);
+      padding:88px 24px;
+      scroll-margin-top: 72px;
+    }
+    .products-inner { max-width:760px; margin:0 auto; }
+
+    /* 회차 탭 */
+    .plan-tab-bar {
+      display:grid; grid-template-columns:repeat(3,1fr); gap:12px;
+      margin-bottom:36px;
+    }
+    .plan-tab {
+      background:var(--white); border:2px solid var(--border);
+      border-radius:16px; padding:18px 12px;
+      cursor:pointer; font-family:inherit;
+      text-align:center; transition:all .2s; position:relative;
+    }
+    .plan-tab:hover { border-color:var(--primary); background:var(--primary-light); }
+    .plan-tab.active { border-color:var(--primary); background:var(--primary-light); }
+    .plan-tab-times { font-size:22px; font-weight:900; color:var(--text-dark); letter-spacing:-.02em; }
+    .plan-tab.active .plan-tab-times { color:var(--primary); }
+    .plan-tab-price { font-size:13px; color:var(--text-muted); margin-top:2px; }
+    .plan-tab-badge {
+      position:absolute; top:-10px; left:50%; transform:translateX(-50%);
+      background:var(--primary); color:#fff;
+      font-size:11px; font-weight:800; padding:3px 10px;
+      border-radius:99px; white-space:nowrap;
+    }
+    .plan-tab-discount {
+      display:inline-block; margin-top:6px;
+      background:var(--primary); color:#fff;
+      font-size:12px; font-weight:800; padding:2px 8px; border-radius:99px;
+    }
+    .plan-tab:not(.active) .plan-tab-discount {
+      background:var(--primary-light); color:var(--primary);
+    }
+    .plan-tab-discount.zero {
+      background:#F5F5F7; color:var(--text-muted);
+    }
+    .plan-tab.active .plan-tab-discount.zero {
+      background:rgba(255,255,255,.5); color:var(--primary);
+    }
+
+    /* 상품 카드 */
+    .product-card {
+      background:var(--white); border-radius:24px;
+      border:2px solid var(--border); padding:32px 28px;
+      box-shadow:0 2px 12px rgba(0,0,0,.05);
+      animation: fadeup .3s ease both;
+    }
+    .product-card.highlighted {
+      border-color:var(--primary);
+      box-shadow:0 8px 40px rgba(80,70,229,.10);
+    }
+
+    /* 가격 헤더 */
+    .price-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:16px; }
+    .price-left {}
+    .card-name { font-size:24px; font-weight:900; color:var(--text-dark); letter-spacing:-.03em; margin-bottom:4px; }
+    .card-tagline { font-size:15px; color:var(--text-muted); }
+    .card-price-row { display:flex; align-items:baseline; gap:10px; margin-top:12px; flex-wrap:wrap; }
+    .card-price { font-size:36px; font-weight:900; color:var(--text-dark); letter-spacing:-.04em; }
+    .card-price.primary { color:var(--primary); }
+    .card-price-orig { font-size:16px; color:#C4C4C4; text-decoration:line-through; }
+    .card-discount-badge {
+      background:var(--primary-light); color:var(--primary);
+      font-size:13px; font-weight:800; padding:4px 10px; border-radius:8px;
+    }
+
+    .card-divider { height:1px; background:var(--border); margin:24px 0; }
+
+    /* 스펙 */
+    .spec-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px 24px; margin-bottom:24px; }
+    .spec-label { font-size:12px; color:var(--text-muted); margin-bottom:4px; }
+    .spec-value { font-size:17px; font-weight:700; color:var(--text-dark); }
+    .spec-value.primary { color:var(--primary); }
+
+    /* 안내 박스 */
+    .notice-box {
+      background:var(--primary-light); border:1px solid var(--primary-border);
+      border-radius:12px; padding:12px 16px; margin-bottom:12px;
+      display:flex; gap:10px; align-items:flex-start;
+    }
+    .notice-icon { color:var(--primary); flex-shrink:0; }
+    .notice-text { font-size:14px; color:var(--primary); font-weight:500; line-height:1.6; }
+
+    /* 포함 기능 토글 */
+    .toggle-btn {
+      background:none; border:none; cursor:pointer; font-family:inherit;
+      color:var(--text-muted); font-size:14px;
+      display:flex; align-items:center; gap:4px;
+      padding:0; margin-bottom:20px;
+    }
+    .features-list { list-style:none; display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
+    .features-list li { display:flex; gap:10px; font-size:16px; color:var(--text-body); line-height:1.5; }
+    .features-list .check { color:var(--primary); flex-shrink:0; }
+
+    /* CTA 버튼 */
+    .card-cta {
+      width:100%; padding:16px; border-radius:14px; border:none;
+      font-size:16px; font-weight:700; cursor:pointer; font-family:inherit;
+      transition:opacity .15s, transform .1s;
+      background:var(--primary); color:#fff;
+      box-shadow:0 6px 20px rgba(80,70,229,.25);
+    }
+    .card-cta:hover  { opacity:.88; }
+    .card-cta:active { transform:scale(.98); }
+    .card-cta.sub    { background:var(--primary-light); color:var(--primary); box-shadow:none; }
+
+    /* 패키지 프로모션 배너 — 보더 카드 */
+    .package-promo {
+      margin-top:20px; border-radius:16px;
+      background: var(--white);
+      border: 1.5px solid var(--primary-border);
+      padding:18px 22px;
+      display:flex; align-items:center; justify-content:space-between;
+      gap:16px; flex-wrap:wrap;
+    }
+    .package-promo-left { display:flex; align-items:center; gap:14px; }
+    .package-promo-icon {
+      width:44px; height:44px; border-radius:12px;
+      background:var(--primary-light); flex-shrink:0;
+      display:flex; align-items:center; justify-content:center; font-size:20px;
+    }
+    .package-promo-text strong { font-size:15px; font-weight:800; color:var(--text-dark); display:block; margin-bottom:3px; }
+    .package-promo-text span { font-size:13px; color:var(--text-sub); line-height:1.5; }
+    .package-promo-right { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .package-promo-discount {
+      background:var(--primary-light); color:var(--primary);
+      font-size:13px; font-weight:800; padding:5px 12px; border-radius:99px;
+    }
+    .package-promo-btn {
+      display:inline-flex; align-items:center; gap:6px;
+      background:var(--primary); color:#fff;
+      font-size:14px; font-weight:700; padding:10px 18px;
+      border-radius:10px; white-space:nowrap; flex-shrink:0;
+      text-decoration:none; transition:opacity .15s;
+      cursor:pointer; border:none; font-family:inherit;
+    }
+    .package-promo-btn:hover { opacity:.88; }
+
+    /* ── 비교표 ── */
+    #compare {
+      max-width:760px; margin:44px auto 0;
+      border-radius:20px; border:1px solid var(--border);
+      overflow:hidden; background:var(--white);
+    }
+    .compare-head { display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr; border-bottom:1px solid var(--border); }
+    .compare-head-cell {
+      padding:14px 16px; text-align:center; font-size:14px; font-weight:700;
+      background:var(--subtle); color:var(--text-body);
+      border-left:1px solid var(--border);
+    }
+    .compare-head-cell:first-child { border-left:none; text-align:left; }
+    .compare-head-cell.primary { background:var(--primary-light); color:var(--primary); }
+    .compare-row { display:grid; grid-template-columns:1.2fr 1fr 1fr 1fr; border-bottom:1px solid #F5F5F5; }
+    .compare-row:last-child { border-bottom:none; }
+    .compare-row.accent { background:#F8F8FF; }
+    .compare-row-label { padding:13px 16px; font-size:14px; color:var(--text-muted); font-weight:500; }
+    .compare-row-val { padding:13px 16px; text-align:center; font-size:14px; font-weight:700; color:var(--text-dark); border-left:1px solid #F5F5F5; }
+    .compare-row-val.primary { color:var(--primary); }
+    .compare-row-val.best {
+      background:var(--primary-light); color:var(--primary);
+      font-size:15px;
+    }
+
+    /* ── 프로세스 ── */
+    #process {
+      background:var(--subtle); border-top:1px solid var(--border);
+      padding:88px 24px; scroll-margin-top:72px;
+    }
+    .process-inner { max-width:800px; margin:0 auto; }
+    .steps-wrap { position:relative; }
+    .steps-line {
+      position:absolute; top:19px; left:10%; right:10%; height:1px;
+      background: var(--primary-mid);
+      z-index:0;
+    }
+    .steps-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; position:relative; }
+    .step { display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 4px; z-index:1; }
+    .step-circle {
+      width:40px; height:40px; border-radius:50%;
+      background:var(--white); border:1.5px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      margin-bottom:14px; box-shadow:0 1px 4px rgba(0,0,0,.06);
+    }
+    .step-circle.accent {
+      background:var(--primary); border:none;
+      box-shadow:0 4px 16px rgba(80,70,229,.30);
+    }
+    .step-num { font-size:12px; font-weight:900; color:var(--text-muted); }
+    .step-circle.accent .step-num { color:#fff; }
+    .step-title-row { display:flex; align-items:center; justify-content:center; gap:4px; margin-bottom:4px; flex-wrap:wrap; }
+    .step-title { font-size:14px; font-weight:700; color:var(--text-dark); }
+    .step-title.accent { color:var(--primary); }
+    .accent-badge {
+      background:var(--primary-light); color:var(--primary);
+      font-size:10px; font-weight:800; padding:2px 6px;
+      border-radius:99px; letter-spacing:.05em;
+    }
+    .step-desc { font-size:12px; color:var(--text-muted); line-height:1.5; }
+
+    /* ── CTA 배너 ── */
+    #cta-banner {
+      background: var(--primary);
+      padding:72px 24px; text-align:center; position:relative; overflow:hidden;
+    }
+    .cta-overlay { display:none; }
+    .cta-inner { position:relative; max-width:600px; margin:0 auto; }
+    .cta-label { color:rgba(255,255,255,.75); font-size:12px; font-weight:700; letter-spacing:.15em; text-transform:uppercase; margin-bottom:14px; }
+    .cta-h2 { font-size:clamp(1.7rem, 4vw, 2.6rem); font-weight:900; color:#fff; letter-spacing:-.03em; line-height:1.25; margin-bottom:16px; }
+    .cta-sub { color:rgba(255,255,255,.8); font-size:16px; margin-bottom:32px; line-height:1.7; }
+    .cta-btn {
+      background:#fff; color:var(--primary); border:none; border-radius:14px;
+      padding:18px 36px; font-size:17px; font-weight:700;
+      cursor:pointer; font-family:inherit; transition:opacity .15s;
+    }
+    .cta-btn:hover { opacity:.88; }
+
+    /* ── 푸터 ── */
+    #footer {
+      background:var(--subtle); border-top:1px solid var(--border);
+      padding:56px 24px 40px;
+    }
+    .footer-grid {
+      max-width:1080px; margin:0 auto;
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:48px; align-items:start;
+    }
+    .footer-logo { display:flex; align-items:center; gap:8px; margin-bottom:20px; }
+    .footer-logo-icon img { width:80px; display:block; }
+    .footer-h3 { color:var(--text-dark); font-weight:700; font-size:18px; margin-bottom:16px; }
+    .contact-list { display:flex; flex-direction:column; gap:12px; }
+    .contact-list a { display:flex; align-items:center; gap:8px; font-size:15px; color:var(--text-sub); text-decoration:none; transition:color .15s; }
+    .contact-list a:hover { color:var(--primary); }
+    .guide-label { color:var(--text-muted); font-size:13px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; margin-bottom:12px; }
+    .guide-list { display:flex; flex-direction:column; gap:8px; }
+    .guide-row {
+      display:flex; justify-content:space-between; align-items:center;
+      background:var(--white); border:1px solid var(--border);
+      border-radius:12px; padding:15px 18px;
+      font-size:14px; color:var(--text-body); text-decoration:none; font-weight:500;
+      transition:border-color .15s, background .15s;
+    }
+    .guide-row:hover { border-color:var(--primary); background:var(--primary-light); }
+    .guide-arrow { color:#C4C4C4; font-size:16px; }
+    .footer-bottom {
+      max-width:1080px; margin:36px auto 0; padding-top:24px;
+      border-top:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center;
+      flex-wrap:wrap; gap:8px;
+    }
+    .footer-copy { font-size:12px; color:var(--text-muted); }
+    .footer-note { font-size:13px; color:#C4C4C4; }
+
+    /* ── 반응형 ── */
+    @media (max-width:680px) {
+      .gnb-nav { display:none; }
+      .usp-panel { grid-template-columns:1fr; }
+      .usp-visual { display:none; }
+      .plan-tab-bar { grid-template-columns:1fr; }
+      .price-header { flex-direction:column; }
+
+      .compare-head { grid-template-columns:1fr 1fr 1fr 1fr; }
+      .steps-grid { grid-template-columns:1fr; }
+      .steps-line { display:none; }
+      .step { flex-direction:row; text-align:left; gap:16px; }
+      .step-circle { flex-shrink:0; margin-bottom:0; }
+      .footer-grid { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ① GNB -->
+<header id="gnb">
+  <div class="gnb-inner">
+    <div class="gnb-logo">
+      <div class="gnb-logo-icon">
+        <img src="https://github.com/user-attachments/assets/e42f44ca-cbed-4219-8395-1feea06bf2aa" alt="그립애즈 로고">
+      </div>
+    </div>
+    <nav class="gnb-nav">
+      <button onclick="focusSection('usp')">서비스 소개</button>
+      <button onclick="focusSection('products')">요금제</button>
+      <button onclick="focusSection('process')">집행 프로세스</button>
+      <button onclick="focusSection('footer')">문의하기</button>
+    </nav>
+    <button class="btn-primary sm" onclick="focusSection('products')">지금 신청하기</button>
+  </div>
+</header>
+
+<!-- ② Hero -->
+<section id="hero">
+  <div class="hero-blob" style="top:-10%;right:-5%;width:55vw;height:55vw;max-width:560px;max-height:560px;background:radial-gradient(circle,rgba(80,70,229,.07) 0%,transparent 70%);"></div>
+  <div class="hero-blob" style="bottom:0;left:-8%;width:40vw;height:40vw;max-width:400px;max-height:400px;background:radial-gradient(circle,rgba(80,70,229,.05) 0%,transparent 70%);"></div>
+
+  <div class="hero-inner">
+    <div class="promo-chip">
+      <span class="promo-dot"></span>
+      <span class="promo-text">💜 다회권 구매 시 최대 40% 할인 + 부스트팩 통합 패키지 추가 5%</span>
+    </div>
+    <h1>한 번 온 팬을<br><span>평생 고객으로</span><br>만드세요.</h1>
+    <p class="hero-sub">
+      인스타그램 숏폼 광고로 신규 고객을 유입하고,<br>
+      <strong>관심사 기반 타겟팅</strong>으로 실질적인 매출을 만드세요.
+    </p>
+    <div class="hero-ctas">
+      <button class="btn-primary" onclick="focusSection('products')">지금 바로 광고 신청하기 →</button>
+      <button class="btn-outline" href="mailto:grip.ad@gripcorp.co" onclick="focusSection('footer')">그립애즈 문의하기</button>
+    </div>
+    <div class="stat-bar">
+      <div class="stat-item"><p class="stat-val">인스타그램</p><p class="stat-lbl">숏폼 콘텐츠 확산</p></div>
+      <div class="stat-item"><p class="stat-val">관심사 타겟</p><p class="stat-lbl">패션·쇼핑·할인 등</p></div>
+      <div class="stat-item"><p class="stat-val">최대 40%</p><p class="stat-lbl">5회권 기준 단가 절감</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ③ USP -->
+<section id="usp">
+  <div class="usp-inner">
+    <span class="section-label">소셜 커넥트, 어떤 점이 좋을까요?</span>
+    <h2 class="section-h2">인스타그램 확산 광고의 3가지 강점</h2>
+
+    <div class="tab-bar">
+      <button class="usp-tab active" data-usp="0">신규 고객 유입</button>
+      <button class="usp-tab"        data-usp="1">높은 전환율</button>
+      <button class="usp-tab"        data-usp="2">집행 효율</button>
+    </div>
+
+    <div id="usp-panel" class="usp-panel">
+      <div>
+        <h3 class="usp-headline" id="usp-headline"></h3>
+        <p class="usp-body" id="usp-body"></p>
+        <div class="stat-card">
+          <span class="stat-card-val" id="usp-stat-val"></span>
+          <span class="stat-card-lbl" id="usp-stat-lbl"></span>
+        </div>
+      </div>
+      <div class="usp-visual">
+        <div class="usp-visual-blur"></div>
+        <span class="usp-emoji" id="usp-emoji"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ④ 상품 요금제 -->
+<section id="products">
+  <div class="products-inner">
+    <span class="section-label">요금제</span>
+    <h2 class="section-h2">자주 쓸수록 단가가 낮아집니다</h2>
+    <p class="section-sub">집행 횟수에 따라 할인율이 높아지는 다회권 구조로 설계됐어요.</p>
+
+    <!-- 회차 탭 -->
+    <div class="plan-tab-bar" id="plan-tab-bar">
+      <div class="plan-tab active" data-plan="0" onclick="selectPlan(0)">
+        <div class="plan-tab-times">1회</div>
+        <div class="plan-tab-price">300,000원</div>
+        <div class="plan-tab-discount zero">할인 없음</div>
+      </div>
+      <div class="plan-tab" data-plan="1" onclick="selectPlan(1)">
+        <div class="plan-tab-times">3회권</div>
+        <div class="plan-tab-price">회당 240,000원</div>
+        <div class="plan-tab-discount">20% 할인</div>
+      </div>
+      <div class="plan-tab" data-plan="2" onclick="selectPlan(2)">
+        <span class="plan-tab-badge">✨ 최대 할인</span>
+        <div class="plan-tab-times">5회권</div>
+        <div class="plan-tab-price">회당 180,000원</div>
+        <div class="plan-tab-discount">40% 할인</div>
+      </div>
+    </div>
+
+    <!-- 상품 카드 -->
+    <div id="product-card"></div>
+
+    <!-- 부스트팩 통합 패키지 프로모션 -->
+    <div class="package-promo">
+      <div class="package-promo-left">
+        <div class="package-promo-icon">🚀</div>
+        <div class="package-promo-text">
+          <strong>부스트팩 통합 패키지 추가 할인</strong>
+          <span>소셜 커넥트 + 부스트팩을 함께 구매하면 전체 금액에서 추가 5% 할인이 적용됩니다.</span>
+        </div>
+      </div>
+      <div class="package-promo-right">
+        <span class="package-promo-discount">추가 5% OFF</span>
+        <a href="index.html" class="package-promo-btn">부스트팩 보러가기 →</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 비교표 -->
+  <div id="compare" style="margin-top:56px;">
+    <div class="compare-head">
+      <div class="compare-head-cell">구분</div>
+      <div class="compare-head-cell">1회</div>
+      <div class="compare-head-cell">3회권</div>
+      <div class="compare-head-cell primary">5회권</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-row-label">정가 (총 금액)</div>
+      <div class="compare-row-val" style="text-decoration:line-through;color:#C4C4C4;font-weight:600;">300,000원</div>
+      <div class="compare-row-val" style="text-decoration:line-through;color:#C4C4C4;font-weight:600;">900,000원</div>
+      <div class="compare-row-val" style="text-decoration:line-through;color:#C4C4C4;font-weight:600;">1,500,000원</div>
+    </div>
+    <div class="compare-row accent">
+      <div class="compare-row-label">할인가 (총 금액)</div>
+      <div class="compare-row-val">300,000원</div>
+      <div class="compare-row-val">720,000원</div>
+      <div class="compare-row-val best">900,000원</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-row-label">회당 단가</div>
+      <div class="compare-row-val">300,000원</div>
+      <div class="compare-row-val">240,000원</div>
+      <div class="compare-row-val best">180,000원</div>
+    </div>
+    <div class="compare-row accent">
+      <div class="compare-row-label">할인율</div>
+      <div class="compare-row-val">—</div>
+      <div class="compare-row-val">20%</div>
+      <div class="compare-row-val best">40%</div>
+    </div>
+    <div class="compare-row accent">
+      <div class="compare-row-label">콘텐츠 형태</div>
+      <div class="compare-row-val">인스타그램 숏폼</div>
+      <div class="compare-row-val">인스타그램 숏폼</div>
+      <div class="compare-row-val best">인스타그램 숏폼</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-row-label">타겟</div>
+      <div class="compare-row-val">관심사 타겟</div>
+      <div class="compare-row-val">관심사 타겟</div>
+      <div class="compare-row-val best">관심사 타겟</div>
+    </div>
+    <div class="compare-row accent">
+      <div class="compare-row-label">성과 리포트</div>
+      <div class="compare-row-val">✓</div>
+      <div class="compare-row-val">✓ + 합산</div>
+      <div class="compare-row-val best">✓ + 합산</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-row-label">전담 매니저 컨설팅</div>
+      <div class="compare-row-val">—</div>
+      <div class="compare-row-val">—</div>
+      <div class="compare-row-val best">✓</div>
+    </div>
+  </div>
+
+  <!-- 제작 가이드 CTA -->
+  <div style="max-width:760px;margin:20px auto 0;">
+    <div style="background:var(--subtle);border:1px solid var(--border);border-radius:16px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+      <div>
+        <p style="font-size:15px;font-weight:700;color:var(--text-dark);margin-bottom:4px;">📋 콘텐츠 제작 가이드</p>
+        <p style="font-size:14px;color:var(--text-muted);">소셜 커넥트에 최적화된 숏폼 콘텐츠 제작 기준을 확인하세요.</p>
+      </div>
+      <a href="#" style="display:inline-flex;align-items:center;gap:6px;background:var(--primary);color:#fff;font-size:14px;font-weight:700;padding:11px 20px;border-radius:10px;text-decoration:none;white-space:nowrap;transition:opacity .15s;" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        제작 가이드 보기 →
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ⑤ 프로세스 -->
+<section id="process">
+  <div class="process-inner">
+    <span class="section-label">집행 프로세스</span>
+    <h2 class="section-h2">신청부터 발송까지</h2>
+    <p class="section-sub"><span style="color:var(--primary);font-weight:600;">💜 정기적인 집행</span>이 팬 관계를 더 단단하게 만듭니다.</p>
+
+    <div class="steps-wrap">
+      <div class="steps-line"></div>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="step-circle"><span class="step-num">01</span></div>
+          <div>
+            <div class="step-title-row"><span class="step-title">요금제 신청</span></div>
+            <p class="step-desc">원하는 회차권 선택 및 온라인 신청</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-circle"><span class="step-num">02</span></div>
+          <div>
+            <div class="step-title-row"><span class="step-title">담당자 배정</span></div>
+            <p class="step-desc">영업일 1일 이내 전담 매니저 배정</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-circle accent"><span class="step-num">03</span></div>
+          <div>
+            <div class="step-title-row">
+              <span class="step-title accent">콘텐츠 확정</span>
+              <span class="accent-badge">D-3</span>
+            </div>
+            <p class="step-desc">발송 3일 전까지 이미지·문구 제출 필요</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-circle"><span class="step-num">04</span></div>
+          <div>
+            <div class="step-title-row"><span class="step-title">광고 집행</span></div>
+            <p class="step-desc">관심사 타겟 기반 인스타그램 광고 노출 시작</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-circle"><span class="step-num">05</span></div>
+          <div>
+            <div class="step-title-row"><span class="step-title">성과 리포트</span></div>
+            <p class="step-desc">집행 후 노출·도달·반응 데이터 리포트 제공</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ⑥ CTA 배너 -->
+<section id="cta-banner">
+  <div class="cta-overlay"></div>
+  <div class="cta-inner">
+    <p class="cta-label">지금 시작하기</p>
+    <h2 class="cta-h2">팬이 먼저 찾아오는 브랜드,<br>소셜 커넥트로 시작하세요.</h2>
+    <p class="cta-sub">5회권 구매 시 최대 40% 할인<br>부스트팩 통합 시 추가 5% 혜택까지.</p>
+    <button class="cta-btn" onclick="focusSection('products')">지금 바로 광고 신청하기 →</button>
+  </div>
+</section>
+
+<!-- ⑦ 푸터 -->
+<footer id="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-logo">
+        <div class="footer-logo-icon">
+          <img src="https://github.com/user-attachments/assets/e42f44ca-cbed-4219-8395-1feea06bf2aa" alt="그립애즈 로고">
+        </div>
+      </div>
+      <h3 class="footer-h3">도움이 필요하신가요?</h3>
+      <div class="contact-list">
+        <a href="mailto:grip.ad@gripcorp.co">✉️ <span>grip.ad@gripcorp.co</span></a>
+      </div>
+    </div>
+    <div>
+      <p class="guide-label">가이드 다운로드</p>
+      <div class="guide-list">
+        <a href="#" class="guide-row"><span>소셜 커넥트 소개서 다운로드</span><span class="guide-arrow">↓</span></a>
+        <a href="#" class="guide-row"><span>콘텐츠 제작 가이드</span><span class="guide-arrow">↓</span></a>
+        <a href="#" class="guide-row"><span>이미지 규격 가이드</span><span class="guide-arrow">↓</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">© 2026 Grip Co., Ltd. All rights reserved.</p>
+    <p class="footer-note">본 페이지는 그립애즈 광고 상품 안내용 페이지입니다.</p>
+  </div>
+</footer>
+
+<script>
+  // ── 데이터 ──────────────────────────────────────────────────
+  const USP = [
+    {
+      headline: "인스타그램에서\n새로운 고객을 만나세요",
+      body: "단순 노출을 넘어, 패션·온라인 쇼핑·할인·특가 등 구매 의도가 높은 관심사를 가진 잠재 고객에게 정확하게 도달합니다. 내 라이브를 모르던 사람을 팬으로 만드는 확산 광고예요.",
+      statVal: "관심사 타겟", statLbl: "패션, 쇼핑, 할인, 특가, 쿠폰 등", emoji: "💜"
+    },
+    {
+      headline: "구매 가능성이 높은\n잠재 고객에게 직접 노출",
+      body: "일반 노출 광고와 달리, 실제로 온라인 쇼핑과 할인 콘텐츠에 반응하는 유저를 타겟팅합니다. 클릭 한 번이 실질적인 구매로 이어질 가능성이 높아요.",
+      statVal: "높은 전환율", statLbl: "관심사 기반 정밀 타겟 광고", emoji: "🎯"
+    },
+    {
+      headline: "자주 쓸수록\n단가가 낮아지는 구조",
+      body: "3회권 20%, 5회권 40% 할인으로 꾸준히 콘텐츠를 확산할수록 마케팅 비용이 절감됩니다. 장기적으로 브랜드 인지도를 쌓는 가장 효율적인 방법이에요.",
+      statVal: "최대 40%", statLbl: "5회권 기준 단가 절감율", emoji: "📈"
+    }
+  ];
+
+  const PLANS = [
+    {
+      label: "1회 집행",
+      tagline: "한 번 써보고 싶은 셀러에게",
+      times: 1,
+      unitPrice: 300000,
+      totalPrice: 300000,
+      discount: 0,
+      save: 0,
+      highlighted: false,
+      specs: [
+        { l:"회당 단가",    v:"300,000원" },
+        { l:"총 결제 금액", v:"300,000원" },
+        { l:"콘텐츠 형태",  v:"인스타그램 숏폼 콘텐츠" },
+        { l:"타겟",        v:"관심사 타겟 (패션, 온라인 쇼핑 등)" }
+      ],
+      notices: [],
+      features: [
+        "인스타그램 숏폼 콘텐츠 확산 광고",
+        "관심사 기반 타겟 노출 (패션, 옷, 온라인 쇼핑, 할인, 특가, 쿠폰 등)",
+        "신규 잠재 고객 도달",
+        "집행 후 노출·도달·반응 성과 리포트 제공"
+      ]
+    },
+    {
+      label: "3회권",
+      tagline: "정기적으로 콘텐츠를 확산하려는 셀러에게",
+      times: 3,
+      unitPrice: 240000,
+      totalPrice: 720000,
+      discount: 20,
+      save: 180000,
+      highlighted: false,
+      specs: [
+        { l:"회당 단가",    v:"240,000원 (20% 할인)" },
+        { l:"총 결제 금액", v:"720,000원" },
+        { l:"콘텐츠 형태",  v:"인스타그램 숏폼 콘텐츠" },
+        { l:"타겟",        v:"관심사 타겟 (패션, 온라인 쇼핑 등)" }
+      ],
+      notices: [
+        "효과적인 성과를 위해 주 1회 이상의 정기적인 집행을 권장합니다."
+      ],
+      features: [
+        "인스타그램 숏폼 콘텐츠 확산 광고",
+        "관심사 기반 타겟 노출 (패션, 옷, 온라인 쇼핑, 할인, 특가, 쿠폰 등)",
+        "신규 잠재 고객 도달",
+        "집행 후 노출·도달·반응 성과 리포트 제공",
+        "3회 합산 성과 리포트 제공"
+      ]
+    },
+    {
+      label: "5회권",
+      tagline: "꾸준한 콘텐츠 확산으로 브랜드를 키우려는 셀러에게",
+      times: 5,
+      unitPrice: 180000,
+      totalPrice: 900000,
+      discount: 40,
+      save: 600000,
+      highlighted: true,
+      specs: [
+        { l:"회당 단가",    v:"180,000원 (40% 할인)" },
+        { l:"총 결제 금액", v:"900,000원" },
+        { l:"콘텐츠 형태",  v:"인스타그램 숏폼 콘텐츠" },
+        { l:"타겟",        v:"관심사 타겟 (패션, 온라인 쇼핑 등)" }
+      ],
+      notices: [
+        "효과적인 성과를 위해 주 1회 이상의 정기적인 집행을 권장합니다."
+      ],
+      features: [
+        "인스타그램 숏폼 콘텐츠 확산 광고",
+        "관심사 기반 타겟 노출 (패션, 옷, 온라인 쇼핑, 할인, 특가, 쿠폰 등)",
+        "신규 잠재 고객 도달",
+        "집행 후 노출·도달·반응 성과 리포트 제공",
+        "5회 합산 성과 리포트 제공",
+        "전담 매니저 캠페인 컨설팅"
+      ]
+    }
+  ];
+
+  // ── GNB 스크롤 ──────────────────────────────────────────────
+  window.addEventListener('scroll', () => {
+    document.getElementById('gnb').classList.toggle('scrolled', window.scrollY > 20);
+  }, { passive: true });
+
+  // ── 스크롤 유틸 ─────────────────────────────────────────────
+  function focusSection(id) {
+    const target = document.getElementById(id);
+    if (!target) return;
+    if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.focus({ preventScroll: true });
+  }
+
+  // ── USP 탭 ──────────────────────────────────────────────────
+  let uspActive = 0;
+
+  function renderUSP() {
+    const f = USP[uspActive];
+    document.getElementById('usp-headline').textContent = f.headline;
+    document.getElementById('usp-body').textContent     = f.body;
+    document.getElementById('usp-stat-val').textContent = f.statVal;
+    document.getElementById('usp-stat-lbl').textContent = f.statLbl;
+    document.getElementById('usp-emoji').textContent    = f.emoji;
+    const panel = document.getElementById('usp-panel');
+    panel.style.animation = 'none';
+    panel.offsetHeight;
+    panel.style.animation = 'fadeup .35s ease both';
+  }
+
+  document.querySelectorAll('.usp-tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      uspActive = +btn.dataset.usp;
+      document.querySelectorAll('.usp-tab').forEach(b => b.classList.toggle('active', b === btn));
+      renderUSP();
+    });
+  });
+
+  renderUSP();
+
+  // ── 요금제 탭 & 카드 ────────────────────────────────────────
+  let planActive = 0;
+  let featExpanded = false;
+
+  function selectPlan(i) {
+    planActive = i;
+    document.querySelectorAll('.plan-tab').forEach((t, idx) =>
+      t.classList.toggle('active', idx === i)
+    );
+    renderProduct();
+  }
+
+  function renderProduct() {
+    const p = PLANS[planActive];
+    featExpanded = false;
+
+    const noticesHTML = p.notices.map(n => `
+      <div class="notice-box">
+        <span class="notice-icon">💜</span>
+        <p class="notice-text">${n}</p>
+      </div>`).join('');
+
+    const specsHTML = p.specs.map(s => `
+      <div>
+        <p class="spec-label">${s.l}</p>
+        <p class="spec-value${p.highlighted ? ' primary' : ''}">${s.v}</p>
+      </div>`).join('');
+
+    const featHTML = p.features.map(f => `
+      <li><span class="check">✓</span>${f}</li>`).join('');
+
+    const saveHTML = '';
+
+    const origHTML = p.discount > 0
+      ? `<span class="card-price-orig">${(p.times * 100000).toLocaleString()}원</span>
+         <span class="card-discount-badge">${p.discount}% 할인</span>`
+      : '';
+
+    document.getElementById('product-card').innerHTML = `
+      <div class="product-card${p.highlighted ? ' highlighted' : ''}">
+        <div class="price-header">
+          <div class="price-left">
+            <h3 class="card-name">${p.label}</h3>
+            <p class="card-tagline">${p.tagline}</p>
+            <div class="card-price-row">
+              <span class="card-price${p.highlighted ? ' primary' : ''}">${p.totalPrice.toLocaleString()}원</span>
+              ${origHTML}
+            </div>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:6px;">회당 ${p.unitPrice.toLocaleString()}원</p>
+          </div>
+          ${saveHTML}
+        </div>
+        <div class="card-divider"></div>
+        <div class="spec-grid">${specsHTML}</div>
+        ${noticesHTML}
+        <button class="toggle-btn" id="feat-toggle">▼ 포함 기능 전체 보기</button>
+        <ul class="features-list" id="feat-list" style="display:none">${featHTML}</ul>
+        <button class="card-cta${p.highlighted ? '' : ' sub'}">${p.label} 신청하기</button>
+      </div>`;
+
+    document.getElementById('feat-toggle').addEventListener('click', () => {
+      featExpanded = !featExpanded;
+      document.getElementById('feat-list').style.display = featExpanded ? 'flex' : 'none';
+      document.getElementById('feat-toggle').textContent =
+        featExpanded ? '▲ 포함 기능 닫기' : '▼ 포함 기능 전체 보기';
+    });
+  }
+
+  renderProduct();
+</script>
+</body>
+</html>
